@@ -5,7 +5,6 @@ import dev.ag6.bs_app.model.auth.AuthResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -52,8 +51,6 @@ class AuthRepositoryImpl(
         }
 
         if (response.status == HttpStatusCode.OK) {
-            val res : String = response.bodyAsText()
-            println(res)
             val authResponse: AuthResponse = response.body()
             if (authResponse is AuthResponse.Login) {
                 settings.putString(TOKEN_KEY, authResponse.data.authTicket.token)
@@ -61,8 +58,6 @@ class AuthRepositoryImpl(
             }
             emit(authResponse)
         } else {
-            // Handle other statuses if necessary, or throw exception
-            // For now, we emit what we get if it's a valid AuthResponse type
             try {
                 val authResponse: AuthResponse = response.body()
                 emit(authResponse)

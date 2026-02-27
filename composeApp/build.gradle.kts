@@ -56,7 +56,7 @@ compose.desktop {
         mainClass = "dev.ag6.bs_app.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi)
             packageName = "dev.ag6.bs_app"
             packageVersion = "1.0.0"
         }

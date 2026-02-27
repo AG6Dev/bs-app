@@ -1,5 +1,6 @@
 package dev.ag6.bs_app.di
 
+import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import dev.ag6.bs_app.repository.AuthRepository
 import dev.ag6.bs_app.repository.AuthRepositoryImpl
@@ -10,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.dsl.module
+import java.util.prefs.Preferences
 
 fun initKoin() = startKoin {
     modules(appModule())
@@ -28,7 +30,7 @@ fun appModule() = module {
         }
     }
 
-    single<Settings> { Settings() }
+    single<Settings> { PreferencesSettings(Preferences.userRoot().node("dev/ag6/bs_app")) }
 
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
 
