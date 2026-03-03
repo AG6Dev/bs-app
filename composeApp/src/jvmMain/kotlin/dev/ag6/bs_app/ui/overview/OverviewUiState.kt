@@ -4,6 +4,6 @@ import dev.ag6.bs_app.model.reading.GlucoseReading
 
 data class OverviewUiState(
     val isLoading: Boolean = false,
-    val pastThirtyReadings: List<GlucoseReading> = listOf(),
+    val graphData: List<GlucoseReading> = listOf(),
     val currentReading: GlucoseReading? = null
 )

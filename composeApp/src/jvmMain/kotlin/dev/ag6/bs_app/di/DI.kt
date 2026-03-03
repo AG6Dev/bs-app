@@ -41,7 +41,7 @@ fun appModule() = module {
 
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
 
-    single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get()) }
+    single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get()) }
 
     factory { AuthScreenModel(get()) }
 

@@ -15,6 +15,7 @@ class AuthRepositoryImpl(
 ) : AuthRepository {
     companion object {
         private const val AUTH_ENDPOINT = "https://api.libreview.io/llu/auth/login"
+
         private const val TOKEN_KEY = "auth_token"
         private const val USER_ID_KEY = "user_id"
         private const val EXPIRY_KEY = "auth_token_expiry"
@@ -33,7 +34,7 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun getUserId(): String? {
-        return settings.getStringOrNull("user_id")
+        return settings.getStringOrNull(USER_ID_KEY)
     }
 
     override fun login(
