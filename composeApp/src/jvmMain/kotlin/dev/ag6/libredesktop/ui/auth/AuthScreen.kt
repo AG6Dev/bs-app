@@ -44,6 +44,9 @@ private fun AuthScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Text(text = "Enter your LibreView credentials", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+
         if (state.isAuthenticated) {
             Text("Successfully Authenticated!")
         } else {

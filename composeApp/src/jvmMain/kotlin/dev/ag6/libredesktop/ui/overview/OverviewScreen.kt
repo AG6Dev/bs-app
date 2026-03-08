@@ -74,8 +74,8 @@ fun GlucoseGraph(
     val theme = MaterialTheme.colorScheme
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var hoveredIndex by remember { mutableStateOf<Int?>(null) }
-    val minGlucose = 40f
-    val maxGlucose = 300f
+    val baseMinGlucose = 40f
+    val baseMaxGlucose = 300f
     val targetMin = 70f
     val targetMax = 180f
     val displayedReadings = remember(readings, currentReading) {
@@ -86,12 +86,19 @@ fun GlucoseGraph(
             }
         }.sortedBy { it.timestamp }
     }
+    val (minGlucose, maxGlucose) = remember(displayedReadings) {
+        calculateGraphBounds(
+            readings = displayedReadings,
+            baseMinGlucose = baseMinGlucose,
+            baseMaxGlucose = baseMaxGlucose
+        )
+    }
     val currentReadingIndex = remember(displayedReadings, currentReading) {
         currentReading?.let { reading ->
             displayedReadings.indexOfLast { it.timestamp == reading.timestamp }.takeIf { it >= 0 }
         }
     }
-    val graphPoints = remember(displayedReadings, canvasSize) {
+    val graphPoints = remember(displayedReadings, canvasSize, minGlucose, maxGlucose) {
         if (canvasSize.width == 0 || canvasSize.height == 0) {
             emptyList()
         } else {
@@ -272,6 +279,18 @@ private fun calculateGraphPoints(
         val y = height - ((glucose - minGlucose) / range * height)
         Offset(x, y)
     }
+}
+
+private fun calculateGraphBounds(
+    readings: List<GlucoseReading>, baseMinGlucose: Float, baseMaxGlucose: Float
+): Pair<Float, Float> {
+    if (readings.isEmpty()) return baseMinGlucose to baseMaxGlucose
+
+    val maxReading = readings.maxOf { it.valueInMgPerDl.toFloat() }
+    val paddedMax = maxReading + 20f
+    val dynamicMax = maxOf(baseMaxGlucose, paddedMax)
+
+    return baseMinGlucose to dynamicMax
 }
 
 private fun glucoseToGraphY(glucose: Float, height: Float, minGlucose: Float, maxGlucose: Float): Float {

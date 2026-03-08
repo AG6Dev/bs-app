@@ -39,7 +39,6 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.content.encoding)
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -49,13 +48,14 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
         }
     }
+
+
 }
 
 
 compose.desktop {
     application {
         mainClass = "dev.ag6.libredesktop.MainKt"
-
         nativeDistributions {
             targetFormats(TargetFormat.Msi)
             packageName = "LibreDesktop"

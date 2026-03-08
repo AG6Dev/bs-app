@@ -9,7 +9,7 @@ import dev.ag6.libredesktop.repository.readings.ReadingsRepositoryImpl
 import dev.ag6.libredesktop.ui.auth.AuthScreenModel
 import dev.ag6.libredesktop.ui.overview.OverviewScreenModel
 import io.ktor.client.*
-import io.ktor.client.plugins.compression.ContentEncoding
+import io.ktor.client.plugins.compression.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
