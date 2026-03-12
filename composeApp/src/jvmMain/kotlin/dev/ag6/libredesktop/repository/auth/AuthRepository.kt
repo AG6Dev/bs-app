@@ -1,6 +1,7 @@
 package dev.ag6.libredesktop.repository.auth
 
-import dev.ag6.libredesktop.model.auth.AuthResponse
+import dev.ag6.libredesktop.api.LibreApiResponse
+import dev.ag6.libredesktop.model.auth.AuthLoginData
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
@@ -10,5 +11,5 @@ interface AuthRepository {
 
     suspend fun getUserId(): String?
 
-    fun login(username: String, password: String, countryCode: String = ""): Flow<AuthResponse>
+    fun login(username: String, password: String, countryCode: String = ""): Flow<LibreApiResponse<AuthLoginData>>
 }

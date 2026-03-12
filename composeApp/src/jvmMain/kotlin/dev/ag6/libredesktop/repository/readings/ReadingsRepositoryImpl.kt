@@ -1,21 +1,27 @@
 package dev.ag6.libredesktop.repository.readings
 
 import com.russhwolf.settings.Settings
-import dev.ag6.libredesktop.model.connection.ConnectionResponse
-import dev.ag6.libredesktop.model.connection.GraphResponse
+import dev.ag6.libredesktop.api.LibreApiResponse
+import dev.ag6.libredesktop.api.decodeLibreApiResponse
+import dev.ag6.libredesktop.model.connection.ConnectionData
+import dev.ag6.libredesktop.model.connection.GraphConnectionData
 import dev.ag6.libredesktop.model.reading.GlucoseReading
 import dev.ag6.libredesktop.model.reading.mapToGlucoseReading
 import dev.ag6.libredesktop.repository.auth.AuthRepository
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 
 class ReadingsRepositoryImpl(
     val httpClient: HttpClient,
     val authRepository: AuthRepository,
-    val settings: Settings
+    val settings: Settings,
+    val json: Json
 ) : ReadingsRepository {
     companion object {
         private const val CONNECTIONS_URL = "https://api.libreview.io/llu/connections"
@@ -23,26 +29,37 @@ class ReadingsRepositoryImpl(
     }
 
     override suspend fun getCurrentReading(): GlucoseReading? {
-        val response = makeGetRequest<ConnectionResponse>(CONNECTIONS_URL) ?: return null
+        val response = makeGetRequest(CONNECTIONS_URL, ListSerializer(ConnectionData.serializer())) ?: return null
 
         return when (response) {
-            is ConnectionResponse.Success -> {
+            is LibreApiResponse.Success -> {
                 settings.putString(PATIENT_ID_KEY, response.data.first().patientId)
                 response.data.first().glucoseItem.mapToGlucoseReading()
             }
 
-            is ConnectionResponse.Error -> null
+            is LibreApiResponse.Error -> null
+            is LibreApiResponse.Redirect -> null
         }
     }
 
     override suspend fun getGraphReadings(): List<GlucoseReading> {
         val pid = getPatientId() ?: return emptyList()
-        val response = makeGetRequest<GraphResponse>("$CONNECTIONS_URL/$pid/graph") ?: return emptyList()
+        val response = makeGetRequest(
+            "$CONNECTIONS_URL/$pid/graph",
+            GraphConnectionData.serializer()
+        ) ?: return emptyList()
 
-        return response.data.graphData.map { it.mapToGlucoseReading() }
+        return when (response) {
+            is LibreApiResponse.Success -> response.data.graphData.map { it.mapToGlucoseReading() }
+            is LibreApiResponse.Error -> emptyList()
+            is LibreApiResponse.Redirect -> emptyList()
+        }
     }
 
-    private suspend inline fun <reified T> makeGetRequest(url: String): T? {
+    private suspend fun <T> makeGetRequest(
+        url: String,
+        dataSerializer: KSerializer<T>
+    ): LibreApiResponse<T>? {
         val userId: String = authRepository.getUserId() ?: return null
         val token: String = authRepository.getAuthToken() ?: return null
 
@@ -62,7 +79,7 @@ class ReadingsRepositoryImpl(
         }
 
         return if (response.status.isSuccess()) {
-            response.body()
+            decodeLibreApiResponse(response.bodyAsText(), dataSerializer, json)
         } else {
             null
         }

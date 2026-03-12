@@ -18,18 +18,22 @@ import org.koin.dsl.module
 import java.util.prefs.Preferences
 
 fun initKoin() = startKoin {
-    modules(appModule())
+    modules(appModule() + viewModelModule())
 }
 
 fun appModule() = module {
+    single {
+        Json {
+            ignoreUnknownKeys = true
+            prettyPrint = true
+            isLenient = true
+        }
+    }
+
     single<HttpClient> {
         HttpClient {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    prettyPrint = true
-                    isLenient = true
-                })
+                json(get<Json>())
             }
             install(ContentEncoding) {
                 gzip()
@@ -39,11 +43,12 @@ fun appModule() = module {
 
     single<Settings> { PreferencesSettings(Preferences.userRoot().node("dev/ag6/libredesktop")) }
 
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
 
-    single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get()) }
+    single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get(), get()) }
+}
 
+fun viewModelModule() = module {
     factory { AuthScreenModel(get()) }
-
     factory { OverviewScreenModel(get()) }
 }

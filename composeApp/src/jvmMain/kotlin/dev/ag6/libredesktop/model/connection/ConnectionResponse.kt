@@ -1,29 +1,7 @@
 package dev.ag6.libredesktop.model.connection
 
-import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonContentPolymorphicSerializer
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonObject
-
-object ConnectionResponseSerializer : JsonContentPolymorphicSerializer<ConnectionResponse>(ConnectionResponse::class) {
-    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<ConnectionResponse> {
-        return if (element.jsonObject.containsKey("data")) ConnectionResponse.Success.serializer() else ConnectionResponse.Error.serializer()
-    }
-}
-
-@Serializable(with = ConnectionResponseSerializer::class)
-sealed class ConnectionResponse {
-    @Serializable
-    data class Success(val status: Int, val data: List<ConnectionData>) : ConnectionResponse()
-
-    @Serializable
-    data class Error(val status: Int, val message: Message) : ConnectionResponse() {
-        @Serializable
-        data class Message(val message: String)
-    }
-}
 
 @Serializable
 data class ConnectionData(

@@ -2,7 +2,7 @@ package dev.ag6.libredesktop.ui.auth
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import dev.ag6.libredesktop.model.auth.AuthResponse
+import dev.ag6.libredesktop.api.LibreApiResponse
 import dev.ag6.libredesktop.repository.auth.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,16 +30,33 @@ class AuthScreenModel(
 
     fun onLoginButtonPressed(username: String, password: String) {
         screenModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             repository.login(username, password).collect { result ->
                 when(result) {
-                    is AuthResponse.Login -> {
-                        _uiState.update { it.copy(isAuthenticated = true, data = result) }
+                    is LibreApiResponse.Success -> {
+                        _uiState.update { it.copy(isLoading = false, isAuthenticated = true, data = result) }
                     }
-                    is AuthResponse.Redirect -> {
-                        _uiState.update { it.copy(isAuthenticated = false, data = result) }
+
+                    is LibreApiResponse.Redirect -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isAuthenticated = false,
+                                data = result,
+                                error = "LibreView requested a region redirect to ${result.region}."
+                            )
+                        }
                     }
-                    is AuthResponse.Error -> {
-                        _uiState.update { it.copy(isAuthenticated = false, error = result.error.message) }
+
+                    is LibreApiResponse.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isAuthenticated = false,
+                                data = result,
+                                error = result.message?.message ?: result.error?.message ?: "Login failed."
+                            )
+                        }
                     }
                 }
             }

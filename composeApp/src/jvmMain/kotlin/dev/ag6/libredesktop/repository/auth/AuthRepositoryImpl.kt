@@ -1,17 +1,21 @@
 package dev.ag6.libredesktop.repository.auth
 
 import com.russhwolf.settings.Settings
-import dev.ag6.libredesktop.model.auth.AuthResponse
+import dev.ag6.libredesktop.api.LibreApiResponse
+import dev.ag6.libredesktop.api.decodeLibreApiResponse
+import dev.ag6.libredesktop.model.auth.AuthLoginData
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.json.Json
 
 class AuthRepositoryImpl(
     private val httpClient: HttpClient,
-    private val settings: Settings
+    private val settings: Settings,
+    private val json: Json
 ) : AuthRepository {
     companion object {
         private const val AUTH_ENDPOINT = "https://api.libreview.io/llu/auth/login"
@@ -41,7 +45,7 @@ class AuthRepositoryImpl(
         username: String,
         password: String,
         countryCode: String
-    ): Flow<AuthResponse> = flow {
+    ): Flow<LibreApiResponse<AuthLoginData>> = flow {
         val response = httpClient.post(AUTH_ENDPOINT) {
             contentType(ContentType.Application.Json)
             headers {
@@ -56,21 +60,18 @@ class AuthRepositoryImpl(
             )
         }
 
-        if (response.status == HttpStatusCode.OK) {
-            val authResponse: AuthResponse = response.body()
-            if (authResponse is AuthResponse.Login) {
-                settings.putString(TOKEN_KEY, authResponse.data.authTicket.token)
-                settings.putString(USER_ID_KEY, authResponse.data.user.id)
-                settings.putLong(EXPIRY_KEY, authResponse.data.authTicket.expires)
-            }
-            emit(authResponse)
-        } else {
-            try {
-                val authResponse: AuthResponse = response.body()
-                emit(authResponse)
-            } catch (e: Exception) {
-                throw e
-            }
+        val authResponse = decodeLibreApiResponse(
+            response.bodyAsText(),
+            AuthLoginData.serializer(),
+            json
+        )
+
+        if (response.status == HttpStatusCode.OK && authResponse is LibreApiResponse.Success) {
+            settings.putString(TOKEN_KEY, authResponse.data.authTicket.token)
+            settings.putString(USER_ID_KEY, authResponse.data.user.id)
+            settings.putLong(EXPIRY_KEY, authResponse.data.authTicket.expires)
         }
+
+        emit(authResponse)
     }
 }
