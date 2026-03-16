@@ -6,8 +6,11 @@ import dev.ag6.libredesktop.repository.auth.AuthRepository
 import dev.ag6.libredesktop.repository.auth.AuthRepositoryImpl
 import dev.ag6.libredesktop.repository.readings.ReadingsRepository
 import dev.ag6.libredesktop.repository.readings.ReadingsRepositoryImpl
+import dev.ag6.libredesktop.repository.settings.SettingsRepository
+import dev.ag6.libredesktop.repository.settings.SettingsRepositoryImpl
 import dev.ag6.libredesktop.ui.auth.AuthScreenModel
 import dev.ag6.libredesktop.ui.overview.OverviewScreenModel
+import dev.ag6.libredesktop.ui.screen.SettingsScreenModel
 import io.ktor.client.*
 import io.ktor.client.plugins.compression.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -22,7 +25,7 @@ fun initKoin() = startKoin {
 }
 
 fun appModule() = module {
-    single {
+    single<Json> {
         Json {
             ignoreUnknownKeys = true
             prettyPrint = true
@@ -33,7 +36,7 @@ fun appModule() = module {
     single<HttpClient> {
         HttpClient {
             install(ContentNegotiation) {
-                json(get<Json>())
+                json(get())
             }
             install(ContentEncoding) {
                 gzip()
@@ -44,11 +47,12 @@ fun appModule() = module {
     single<Settings> { PreferencesSettings(Preferences.userRoot().node("dev/ag6/libredesktop")) }
 
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
-
     single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get(), get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get()) }
 }
 
 fun viewModelModule() = module {
     factory { AuthScreenModel(get()) }
-    factory { OverviewScreenModel(get()) }
+    factory { OverviewScreenModel(get(), get()) }
+    factory { SettingsScreenModel(get(), get()) }
 }

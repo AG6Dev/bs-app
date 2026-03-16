@@ -21,8 +21,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
+import cafe.adriel.voyager.navigator.LocalNavigator
 import dev.ag6.libredesktop.model.reading.GlucoseReading
+import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.reading.TrendArrow
+import dev.ag6.libredesktop.ui.screen.SettingsScreen
 import org.jetbrains.compose.resources.painterResource
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,16 +35,25 @@ class OverviewScreen : Screen {
     override fun Content() {
         val screenModel = koinScreenModel<OverviewScreenModel>()
         val state by screenModel.uiState.collectAsState()
+        val navigator = LocalNavigator.current
 
         OverviewScreenContent(
-            isLoading = state.isLoading, currentReading = state.currentReading, pastReadings = state.graphData
+            isLoading = state.isLoading,
+            currentReading = state.currentReading,
+            pastReadings = state.graphData,
+            readingUnit = state.readingUnit,
+            onOpenSettings = { navigator?.push(SettingsScreen()) }
         )
     }
 }
 
 @Composable
 private fun OverviewScreenContent(
-    isLoading: Boolean, currentReading: GlucoseReading? = null, pastReadings: List<GlucoseReading> = listOf()
+    isLoading: Boolean,
+    currentReading: GlucoseReading? = null,
+    pastReadings: List<GlucoseReading> = listOf(),
+    readingUnit: ReadingUnit,
+    onOpenSettings: () -> Unit
 ) {
     if (isLoading && currentReading == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -51,14 +63,24 @@ private fun OverviewScreenContent(
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onOpenSettings) {
+                    Text("Settings")
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             if (currentReading != null) {
-                CurrentReadingCard(currentReading)
+                CurrentReadingCard(currentReading, readingUnit)
                 Spacer(modifier = Modifier.height(16.dp))
             }
             if (pastReadings.isNotEmpty()) {
                 GlucoseGraph(
                     readings = pastReadings,
                     currentReading = currentReading,
+                    readingUnit = readingUnit,
                     modifier = Modifier.fillMaxWidth().height(250.dp)
                 )
             }
@@ -69,7 +91,10 @@ private fun OverviewScreenContent(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GlucoseGraph(
-    readings: List<GlucoseReading>, currentReading: GlucoseReading? = null, modifier: Modifier = Modifier
+    readings: List<GlucoseReading>,
+    currentReading: GlucoseReading? = null,
+    readingUnit: ReadingUnit,
+    modifier: Modifier = Modifier
 ) {
     val theme = MaterialTheme.colorScheme
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
@@ -179,13 +204,13 @@ fun GlucoseGraph(
 
             if (canvasSize.height > 0) {
                 TargetRangeLabel(
-                    text = "High ${targetMax.toInt()}",
+                    text = "High ${readingUnit.formatValueOnly(targetMax.toInt())}",
                     y = glucoseToGraphY(targetMax, canvasSize.height.toFloat(), minGlucose, maxGlucose),
                     canvasSize = canvasSize,
                     modifier = Modifier.align(Alignment.TopStart)
                 )
                 TargetRangeLabel(
-                    text = "Low ${targetMin.toInt()}",
+                    text = "Low ${readingUnit.formatValueOnly(targetMin.toInt())}",
                     y = glucoseToGraphY(targetMin, canvasSize.height.toFloat(), minGlucose, maxGlucose),
                     canvasSize = canvasSize,
                     modifier = Modifier.align(Alignment.TopStart)
@@ -198,6 +223,7 @@ fun GlucoseGraph(
                 val selectedPoint = graphPoints[selectedIndex]
                 HoveredReadingInfo(
                     reading = selectedReading,
+                    readingUnit = readingUnit,
                     point = selectedPoint,
                     canvasSize = canvasSize,
                     modifier = Modifier.align(Alignment.TopStart)
@@ -232,9 +258,12 @@ private fun TargetRangeLabel(
 
 @Composable
 private fun HoveredReadingInfo(
-    reading: GlucoseReading, point: Offset, canvasSize: IntSize, modifier: Modifier = Modifier
+    reading: GlucoseReading,
+    readingUnit: ReadingUnit,
+    point: Offset,
+    canvasSize: IntSize,
+    modifier: Modifier = Modifier
 ) {
-    val readingMmol = reading.valueInMgPerDl / 18.0
     val timestamp = remember(reading.timestamp) {
         SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(reading.timestamp))
     }
@@ -258,7 +287,7 @@ private fun HoveredReadingInfo(
     ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Text(
-                text = String.format("%.1f mmol/L", readingMmol), style = MaterialTheme.typography.labelLarge
+                text = readingUnit.format(reading.valueInMgPerDl), style = MaterialTheme.typography.labelLarge
             )
             Text(
                 text = timestamp, style = MaterialTheme.typography.bodySmall
@@ -320,7 +349,7 @@ private fun List<Offset>.indexOfNearestPoint(pointerPosition: Offset, maxDistanc
 }
 
 @Composable
-fun CurrentReadingCard(reading: GlucoseReading) {
+fun CurrentReadingCard(reading: GlucoseReading, readingUnit: ReadingUnit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -330,9 +359,8 @@ fun CurrentReadingCard(reading: GlucoseReading) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val readingMmol: Double = reading.valueInMgPerDl / 18.0
                 Text(
-                    text = String.format("%.1f", readingMmol),
+                    text = readingUnit.formatValueOnly(reading.valueInMgPerDl),
                     style = MaterialTheme.typography.displayLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -347,6 +375,11 @@ fun CurrentReadingCard(reading: GlucoseReading) {
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = readingUnit.label,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
             val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
             val date = Date(reading.timestamp)
             Text(

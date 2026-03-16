@@ -21,7 +21,9 @@ class AuthRepositoryImpl(
 
         private const val TOKEN_KEY = "auth_token"
         private const val USER_ID_KEY = "user_id"
+        private const val USER_EMAIL_KEY = "user_email"
         private const val EXPIRY_KEY = "auth_token_expiry"
+        private const val PATIENT_ID_KEY = "patient_id"
     }
 
     override suspend fun isAuthenticated(): Boolean {
@@ -38,6 +40,18 @@ class AuthRepositoryImpl(
 
     override suspend fun getUserId(): String? {
         return settings.getStringOrNull(USER_ID_KEY)
+    }
+
+    override suspend fun getUserEmail(): String? {
+        return settings.getStringOrNull(USER_EMAIL_KEY)
+    }
+
+    override suspend fun logout() {
+        settings.remove(TOKEN_KEY)
+        settings.remove(USER_ID_KEY)
+        settings.remove(USER_EMAIL_KEY)
+        settings.remove(EXPIRY_KEY)
+        settings.remove(PATIENT_ID_KEY)
     }
 
     override fun login(
@@ -65,6 +79,7 @@ class AuthRepositoryImpl(
         if (resolvedResponse is LibreApiResponse.Success) {
             settings.putString(TOKEN_KEY, resolvedResponse.data.authTicket.token)
             settings.putString(USER_ID_KEY, resolvedResponse.data.user.id)
+            settings.putString(USER_EMAIL_KEY, resolvedResponse.data.user.email)
             settings.putLong(EXPIRY_KEY, resolvedResponse.data.authTicket.expires)
         }
 

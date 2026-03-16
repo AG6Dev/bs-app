@@ -11,5 +11,9 @@ interface AuthRepository {
 
     suspend fun getUserId(): String?
 
+    suspend fun getUserEmail(): String?
+
+    suspend fun logout()
+
     fun login(username: String, password: String, countryCode: String = ""): Flow<LibreApiResponse<AuthLoginData>>
 }
