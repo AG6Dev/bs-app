@@ -1,9 +1,5 @@
 package dev.ag6.libredesktop.repository.auth
 
-import dev.ag6.libredesktop.api.LibreApiResponse
-import dev.ag6.libredesktop.model.auth.AuthLoginData
-import kotlinx.coroutines.flow.Flow
-
 interface AuthRepository {
     suspend fun isAuthenticated(): Boolean
 
@@ -15,5 +11,5 @@ interface AuthRepository {
 
     suspend fun logout()
 
-    fun login(username: String, password: String, countryCode: String = ""): Flow<LibreApiResponse<AuthLoginData>>
+    suspend fun login(username: String, password: String, countryCode: String = ""): LoginResult
 }

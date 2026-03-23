@@ -1,29 +1,32 @@
 package dev.ag6.libredesktop.repository.auth
 
+import com.github.javakeyring.Keyring
 import com.russhwolf.settings.Settings
-import dev.ag6.libredesktop.api.*
+import dev.ag6.libredesktop.api.LibreApiCallResult
+import dev.ag6.libredesktop.api.buildLibreApiUrl
+import dev.ag6.libredesktop.api.executeLibreApiRequest
+import dev.ag6.libredesktop.api.getLibreApiRegion
 import dev.ag6.libredesktop.model.auth.AuthLoginData
 import io.ktor.client.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 
 class AuthRepositoryImpl(
     private val httpClient: HttpClient,
     private val settings: Settings,
+    private val keyring: Keyring,
     private val json: Json
 ) : AuthRepository {
     companion object {
         private const val AUTH_PATH = "llu/auth/login"
 
-        private const val TOKEN_KEY = "auth_token"
         private const val USER_ID_KEY = "user_id"
         private const val USER_EMAIL_KEY = "user_email"
         private const val EXPIRY_KEY = "auth_token_expiry"
         private const val PATIENT_ID_KEY = "patient_id"
+
+        private const val KEYRING_SERVICE = "LibreDesktop"
     }
 
     override suspend fun isAuthenticated(): Boolean {
@@ -31,7 +34,10 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun getAuthToken(): String? {
-        return settings.getStringOrNull(TOKEN_KEY)?.takeIf { _ ->
+        val email = getUserEmail() ?: return null
+        val token = keyring.getPassword(KEYRING_SERVICE, email)
+
+        return token?.takeIf { _ ->
             val expiry = settings.getLongOrNull(EXPIRY_KEY) ?: return@takeIf false
             val currentTime = System.currentTimeMillis() / 1000
             currentTime < expiry
@@ -47,74 +53,51 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun logout() {
-        settings.remove(TOKEN_KEY)
+        keyring.deletePassword(KEYRING_SERVICE, settings.getStringOrNull(USER_EMAIL_KEY) ?: return)
         settings.remove(USER_ID_KEY)
         settings.remove(USER_EMAIL_KEY)
         settings.remove(EXPIRY_KEY)
         settings.remove(PATIENT_ID_KEY)
     }
 
-    override fun login(
+    override suspend fun login(
         username: String,
         password: String,
         countryCode: String
-    ): Flow<LibreApiResponse<AuthLoginData>> = flow {
-        val authResponse = loginAgainstRegion(
-            username = username,
-            password = password,
-            region = settings.getLibreApiRegion() ?: countryCode.ifBlank { null }
-        )
-
-        val resolvedResponse = if (authResponse is LibreApiResponse.Redirect) {
-            settings.setLibreApiRegion(authResponse.region)
-            loginAgainstRegion(
-                username = username,
-                password = password,
-                region = authResponse.region
-            )
-        } else {
-            authResponse
-        }
-
-        if (resolvedResponse is LibreApiResponse.Success) {
-            settings.putString(TOKEN_KEY, resolvedResponse.data.authTicket.token)
-            settings.putString(USER_ID_KEY, resolvedResponse.data.user.id)
-            settings.putString(USER_EMAIL_KEY, resolvedResponse.data.user.email)
-            settings.putLong(EXPIRY_KEY, resolvedResponse.data.authTicket.expires)
-        }
-
-        emit(resolvedResponse)
-    }
-
-    private suspend fun loginAgainstRegion(
-        username: String,
-        password: String,
-        region: String?
-    ): LibreApiResponse<AuthLoginData> {
-        val response = httpClient.post(buildLibreApiUrl(region, AUTH_PATH)) {
-            contentType(ContentType.Application.Json)
-            headers {
-                append("product", "llu.android")
-                append("version", "4.2.1")
-            }
-            setBody(
-                mapOf(
-                    "email" to username,
-                    "password" to password
+    ): LoginResult {
+        val authResult = executeLibreApiRequest(
+            settings = settings,
+            json = json,
+            initialRegion = settings.getLibreApiRegion() ?: countryCode.ifBlank { null },
+            successSerializer = AuthLoginData.serializer()
+        ) { region ->
+            httpClient.post(buildLibreApiUrl(region, AUTH_PATH)) {
+                contentType(ContentType.Application.Json)
+                headers {
+                    append("product", "llu.android")
+                    append("version", "4.2.1")
+                }
+                setBody(
+                    mapOf(
+                        "email" to username,
+                        "password" to password
+                    )
                 )
-            )
+            }
         }
 
-        val authResponse = decodeLibreApiResponse(
-            response.bodyAsText(),
-            AuthLoginData.serializer(),
-            json
-        )
+        return when (authResult) {
+            is LibreApiCallResult.Success -> {
+                keyring.setPassword(KEYRING_SERVICE, authResult.data.user.email, authResult.data.authTicket.token)
+                settings.putString(USER_ID_KEY, authResult.data.user.id)
+                settings.putString(USER_EMAIL_KEY, authResult.data.user.email)
+                settings.putLong(EXPIRY_KEY, authResult.data.authTicket.expires)
+                LoginResult.Success(authResult.data)
+            }
 
-        if (authResponse is LibreApiResponse.Success && !region.isNullOrBlank()) {
-            settings.setLibreApiRegion(region)
+            is LibreApiCallResult.Failure -> {
+                LoginResult.Failure(authResult.message ?: "Login failed.")
+            }
         }
-
-        return authResponse
     }
 }

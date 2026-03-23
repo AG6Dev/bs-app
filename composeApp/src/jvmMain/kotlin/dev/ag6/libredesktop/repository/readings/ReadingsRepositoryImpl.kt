@@ -1,7 +1,10 @@
 package dev.ag6.libredesktop.repository.readings
 
 import com.russhwolf.settings.Settings
-import dev.ag6.libredesktop.api.*
+import dev.ag6.libredesktop.api.LibreApiCallResult
+import dev.ag6.libredesktop.api.buildLibreApiUrl
+import dev.ag6.libredesktop.api.executeLibreApiRequest
+import dev.ag6.libredesktop.api.getLibreApiRegion
 import dev.ag6.libredesktop.model.connection.ConnectionData
 import dev.ag6.libredesktop.model.connection.GraphConnectionData
 import dev.ag6.libredesktop.model.reading.GlucoseReading
@@ -9,7 +12,6 @@ import dev.ag6.libredesktop.model.reading.mapToGlucoseReading
 import dev.ag6.libredesktop.repository.auth.AuthRepository
 import io.ktor.client.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
@@ -34,13 +36,12 @@ class ReadingsRepositoryImpl(
         ) ?: return null
 
         return when (response) {
-            is LibreApiResponse.Success -> {
+            is LibreApiCallResult.Success -> {
                 settings.putString(PATIENT_ID_KEY, response.data.first().patientId)
                 response.data.first().glucoseItem.mapToGlucoseReading()
             }
 
-            is LibreApiResponse.Error -> null
-            is LibreApiResponse.Redirect -> null
+            is LibreApiCallResult.Failure -> null
         }
     }
 
@@ -52,16 +53,15 @@ class ReadingsRepositoryImpl(
         ) ?: return emptyList()
 
         return when (response) {
-            is LibreApiResponse.Success -> response.data.graphData.map { it.mapToGlucoseReading() }
-            is LibreApiResponse.Error -> emptyList()
-            is LibreApiResponse.Redirect -> emptyList()
+            is LibreApiCallResult.Success -> response.data.graphData.map { it.mapToGlucoseReading() }
+            is LibreApiCallResult.Failure -> emptyList()
         }
     }
 
     private suspend fun <T> makeGetRequest(
         path: String,
         dataSerializer: KSerializer<T>
-    ): LibreApiResponse<T>? {
+    ): LibreApiCallResult<T>? {
         val userId: String = authRepository.getUserId() ?: return null
         val token: String = authRepository.getAuthToken() ?: return null
 
@@ -69,26 +69,13 @@ class ReadingsRepositoryImpl(
             .digest(userId.toByteArray())
             .joinToString("") { "%02x".format(it) }
 
-        val currentRegion = settings.getLibreApiRegion()
-        val response = httpClient.get(buildLibreApiUrl(currentRegion, path)) {
-            contentType(ContentType.Application.Json)
-            bearerAuth(token)
-            headers {
-                append("Accept-Encoding", "gzip")
-                append("product", "llu.android")
-                append("version", "4.16.0")
-                append("Account-Id", userHash)
-            }
-        }
-
-        if (!response.status.isSuccess()) {
-            return null
-        }
-
-        val decodedResponse = decodeLibreApiResponse(response.bodyAsText(), dataSerializer, json)
-        return if (decodedResponse is LibreApiResponse.Redirect) {
-            settings.setLibreApiRegion(decodedResponse.region)
-            val redirectedResponse = httpClient.get(buildLibreApiUrl(decodedResponse.region, path)) {
+        return executeLibreApiRequest(
+            settings = settings,
+            json = json,
+            initialRegion = settings.getLibreApiRegion(),
+            successSerializer = dataSerializer
+        ) { region ->
+            httpClient.get(buildLibreApiUrl(region, path)) {
                 contentType(ContentType.Application.Json)
                 bearerAuth(token)
                 headers {
@@ -98,14 +85,6 @@ class ReadingsRepositoryImpl(
                     append("Account-Id", userHash)
                 }
             }
-
-            if (redirectedResponse.status.isSuccess()) {
-                decodeLibreApiResponse(redirectedResponse.bodyAsText(), dataSerializer, json)
-            } else {
-                null
-            }
-        } else {
-            decodedResponse
         }
     }
 

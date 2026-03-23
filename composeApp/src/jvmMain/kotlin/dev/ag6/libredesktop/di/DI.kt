@@ -1,5 +1,6 @@
 package dev.ag6.libredesktop.di
 
+import com.github.javakeyring.Keyring
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import dev.ag6.libredesktop.repository.auth.AuthRepository
@@ -18,6 +19,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 import java.util.prefs.Preferences
 
 fun initKoin() = startKoin {
@@ -46,9 +48,13 @@ fun appModule() = module {
 
     single<Settings> { PreferencesSettings(Preferences.userRoot().node("dev/ag6/libredesktop")) }
 
-    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get(), get()) }
     single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+
+    single<Keyring> { Keyring.create() } onClose {
+        it?.close()
+    }
 }
 
 fun viewModelModule() = module {
