@@ -29,8 +29,9 @@ class AuthScreenModel(
     }
 
     fun onLoginButtonPressed(username: String, password: String) {
+        _uiState.update { it.copy(isLoading = true, error = null) }
+
         screenModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
             when (val result = repository.login(username, password)) {
                 is LoginResult.Success -> {
                     _uiState.update { it.copy(isLoading = false, isAuthenticated = true) }

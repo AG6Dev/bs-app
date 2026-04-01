@@ -6,7 +6,6 @@ import dev.ag6.libredesktop.di.initKoin
 
 fun main() = application {
     initKoin()
-
     Window(
         onCloseRequest = ::exitApplication,
         title = "LibreDesktop",

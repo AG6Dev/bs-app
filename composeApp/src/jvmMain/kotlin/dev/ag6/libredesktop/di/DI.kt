@@ -12,6 +12,7 @@ import dev.ag6.libredesktop.repository.settings.SettingsRepositoryImpl
 import dev.ag6.libredesktop.ui.auth.AuthScreenModel
 import dev.ag6.libredesktop.ui.overview.OverviewScreenModel
 import dev.ag6.libredesktop.ui.screen.SettingsScreenModel
+import dev.ag6.libredesktop.ui.theme.AppThemeController
 import io.ktor.client.*
 import io.ktor.client.plugins.compression.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -51,6 +52,7 @@ fun appModule() = module {
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get(), get()) }
     single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+    single { AppThemeController(get()) }
 
     single<Keyring> { Keyring.create() } onClose {
         it?.close()

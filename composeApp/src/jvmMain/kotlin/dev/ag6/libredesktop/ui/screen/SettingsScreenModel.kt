@@ -3,6 +3,7 @@ package dev.ag6.libredesktop.ui.screen
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import dev.ag6.libredesktop.model.reading.ReadingUnit
+import dev.ag6.libredesktop.model.theme.ThemeMode
 import dev.ag6.libredesktop.repository.auth.AuthRepository
 import dev.ag6.libredesktop.repository.settings.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,16 @@ class SettingsScreenModel(
                 _uiState.update {
                     it.copy(
                         readingUnit = readingUnit
+                    )
+                }
+            }
+        }
+
+        screenModelScope.launch {
+            settingsRepository.getThemeMode().collect { themeMode ->
+                _uiState.update {
+                    it.copy(
+                        themeMode = themeMode
                     )
                 }
             }
@@ -61,6 +72,15 @@ class SettingsScreenModel(
             settingsRepository.setReadingUnits(readingUnit)
             _uiState.update {
                 it.copy(readingUnit = readingUnit)
+            }
+        }
+    }
+
+    fun onThemeModeSelected(themeMode: ThemeMode) {
+        screenModelScope.launch {
+            settingsRepository.setThemeMode(themeMode)
+            _uiState.update {
+                it.copy(themeMode = themeMode)
             }
         }
     }
