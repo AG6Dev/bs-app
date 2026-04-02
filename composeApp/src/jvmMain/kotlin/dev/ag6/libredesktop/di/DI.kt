@@ -11,7 +11,7 @@ import dev.ag6.libredesktop.repository.settings.SettingsRepository
 import dev.ag6.libredesktop.repository.settings.SettingsRepositoryImpl
 import dev.ag6.libredesktop.ui.auth.AuthScreenModel
 import dev.ag6.libredesktop.ui.overview.OverviewScreenModel
-import dev.ag6.libredesktop.ui.screen.SettingsScreenModel
+import dev.ag6.libredesktop.ui.settings.SettingsScreenModel
 import dev.ag6.libredesktop.ui.theme.AppThemeController
 import io.ktor.client.*
 import io.ktor.client.plugins.compression.*

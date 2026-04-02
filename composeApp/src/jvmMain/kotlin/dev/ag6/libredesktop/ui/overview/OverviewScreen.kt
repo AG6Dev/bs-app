@@ -25,7 +25,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import dev.ag6.libredesktop.model.reading.GlucoseReading
 import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.reading.TrendArrow
-import dev.ag6.libredesktop.ui.screen.SettingsScreen
+import dev.ag6.libredesktop.ui.settings.SettingsScreen
 import org.jetbrains.compose.resources.painterResource
 import java.text.SimpleDateFormat
 import java.util.*

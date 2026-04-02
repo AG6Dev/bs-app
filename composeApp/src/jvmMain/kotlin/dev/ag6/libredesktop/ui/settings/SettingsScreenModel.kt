@@ -1,4 +1,4 @@
-package dev.ag6.libredesktop.ui.screen
+package dev.ag6.libredesktop.ui.settings
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope

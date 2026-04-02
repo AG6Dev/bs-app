@@ -1,4 +1,4 @@
-package dev.ag6.libredesktop.ui.screen
+package dev.ag6.libredesktop.ui.settings
 
 import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.theme.ThemeMode

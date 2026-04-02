@@ -1,4 +1,4 @@
-package dev.ag6.libredesktop.ui.screen
+package dev.ag6.libredesktop.ui.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
