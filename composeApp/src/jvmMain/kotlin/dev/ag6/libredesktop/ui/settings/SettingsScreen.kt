@@ -47,7 +47,7 @@ object SettingsScreen : Tab {
         get() {
             val icon = rememberVectorPainter(Icons.Default.Settings)
             return remember {
-                TabOptions(1u, "Settings", icon)
+                TabOptions(3u, "Settings", icon)
             }
         }
 }

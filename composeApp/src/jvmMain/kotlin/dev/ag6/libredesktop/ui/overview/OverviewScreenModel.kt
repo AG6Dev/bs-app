@@ -43,8 +43,13 @@ class OverviewScreenModel(
             scheduleRepeatingTask(1.minutes) {
                 val currentReading = repository.getCurrentReading()
                 val graphData = repository.getGraphReadings()
-                _uiState.update { it.copy(isLoading = false, currentReading = currentReading, graphData = graphData) }
-                println("Fetched current reading: $currentReading")
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        currentReading = currentReading,
+                        graphData = graphData
+                    )
+                }
             }
         }
     }

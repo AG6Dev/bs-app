@@ -37,8 +37,9 @@ class ReadingsRepositoryImpl(
 
         return when (response) {
             is LibreApiCallResult.Success -> {
-                settings.putString(PATIENT_ID_KEY, response.data.first().patientId)
-                response.data.first().glucoseItem.mapToGlucoseReading()
+                val connection = response.data.firstOrNull() ?: return null
+                settings.putString(PATIENT_ID_KEY, connection.patientId)
+                connection.glucoseItem.mapToGlucoseReading()
             }
 
             is LibreApiCallResult.Failure -> null

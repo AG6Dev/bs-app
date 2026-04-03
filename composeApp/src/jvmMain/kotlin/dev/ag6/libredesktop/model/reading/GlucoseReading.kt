@@ -1,8 +1,8 @@
 package dev.ag6.libredesktop.model.reading
 
-import libredesktop.composeapp.generated.resources.*
 import dev.ag6.libredesktop.model.connection.GlucoseItem
 import kotlinx.serialization.Serializable
+import libredesktop.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.DrawableResource
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,7 +27,7 @@ fun GlucoseItem.mapToGlucoseReading(): GlucoseReading {
     val dateFormatter = DateTimeFormatter.ofPattern("M/d/yyyy h:mm:ss a").withLocale(Locale.US)
     val localDateTime = LocalDateTime.parse(this.timestamp, dateFormatter)
 
-    val convertedTimestamp = localDateTime.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    val convertedTimestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     return GlucoseReading(
         timestamp = convertedTimestamp, valueInMgPerDl = this.valueInMgPerDl, trendArrow = this.trendArrow
