@@ -29,6 +29,9 @@ import dev.ag6.libredesktop.ui.theme.statusHigh
 import dev.ag6.libredesktop.ui.theme.statusInRange
 import dev.ag6.libredesktop.ui.theme.statusLow
 import org.jetbrains.compose.resources.painterResource
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 object OverviewScreen : Tab {
     @Composable
@@ -106,33 +109,47 @@ private fun OverviewScreenContent(
             Column(
                 modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SectionCard(
-                    title = "Current glucose",
-                ) {
-                    val statusColor = currentReading?.let {
-                        glucoseStatusColor(
-                            valueInMgPerDl = it.valueInMgPerDl,
-                            lowTargetMgDl = lowTargetMgDl,
-                            highTargetMgDl = highTargetMgDl
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SectionCard(
+                        title = "Current glucose",
                     ) {
-                        Text(
-                            text = currentReading?.let { readingUnit.format(it.valueInMgPerDl) } ?: "--",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                        currentReading
-                            ?.trendArrow
-                            ?.let(::trendArrowFromValue)
-                            ?.let { trendArrow ->
-                                TrendArrowBadge(
-                                    trendArrow = trendArrow,
-                                    backgroundColor = statusColor ?: MaterialTheme.colorScheme.surfaceVariant
+                        val statusColor = currentReading?.let {
+                            glucoseStatusColor(
+                                valueInMgPerDl = it.valueInMgPerDl,
+                                lowTargetMgDl = lowTargetMgDl,
+                                highTargetMgDl = highTargetMgDl
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(text = currentReading?.let { readingUnit.format(it.valueInMgPerDl) } ?: "--",
+                                    style = MaterialTheme.typography.headlineMedium)
+                                currentReading?.trendArrow?.let(::trendArrowFromValue)?.let { trendArrow ->
+                                        TrendArrowBadge(
+                                            trendArrow = trendArrow,
+                                            backgroundColor = statusColor ?: MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                    }
+                            }
+                            currentReading?.let { reading ->
+                                val time = remember(reading.timestamp) {
+                                    Instant.ofEpochMilli(reading.timestamp).atZone(ZoneId.systemDefault())
+                                        .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                }
+                                Text(
+                                    text = "Updated $time",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
                     }
                 }
 
