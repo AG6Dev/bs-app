@@ -10,6 +10,7 @@ import dev.ag6.libredesktop.repository.readings.ReadingsRepository
 import dev.ag6.libredesktop.repository.readings.ReadingsRepositoryImpl
 import dev.ag6.libredesktop.repository.settings.SettingsRepository
 import dev.ag6.libredesktop.repository.settings.SettingsRepositoryImpl
+import dev.ag6.libredesktop.ui.alarms.AlarmsScreenModel
 import dev.ag6.libredesktop.ui.auth.AuthScreenModel
 import dev.ag6.libredesktop.ui.overview.OverviewScreenModel
 import dev.ag6.libredesktop.ui.settings.SettingsScreenModel
@@ -60,5 +61,6 @@ fun appModule() = module {
 fun viewModelModule() = module {
     factory { AuthScreenModel(get()) }
     factory { OverviewScreenModel(get(), get()) }
+    factory { AlarmsScreenModel(get()) }
     factory { SettingsScreenModel(get(), get()) }
 }

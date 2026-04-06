@@ -12,6 +12,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import dev.ag6.libredesktop.ui.alarms.AlarmsScreen
 import dev.ag6.libredesktop.ui.components.SidebarNavigation
 import dev.ag6.libredesktop.ui.overview.OverviewScreen
 import dev.ag6.libredesktop.ui.settings.SettingsScreen
@@ -21,7 +22,7 @@ class MainScreen : Screen {
     override fun Content() {
         TabNavigator(OverviewScreen) {
             val tabNavigator = LocalTabNavigator.current
-            val tabs = listOf(OverviewScreen, SettingsScreen)
+            val tabs = listOf(OverviewScreen, AlarmsScreen, SettingsScreen)
 
             Row(
                 modifier = Modifier

@@ -5,11 +5,14 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.getIntFlow
 import com.russhwolf.settings.coroutines.getStringOrNullFlow
 import com.russhwolf.settings.set
+import dev.ag6.libredesktop.model.alarms.AlarmSettings
 import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
 class SettingsRepositoryImpl(private val settings: ObservableSettings) : SettingsRepository {
@@ -47,10 +50,30 @@ class SettingsRepositoryImpl(private val settings: ObservableSettings) : Setting
         return settings.getIntFlow(Keys.LOW_TARGET_KEY, defaultValue = 70)
     }
 
+    override suspend fun setAlarmSettings(alarmSettings: AlarmSettings) {
+        settings[Keys.NOTIFICATION_SETTINGS_KEY] = Json.encodeToString(alarmSettings)
+    }
+
+    override fun getAlarmSettings(): Flow<AlarmSettings> {
+        return settings.getStringOrNullFlow(Keys.NOTIFICATION_SETTINGS_KEY)
+            .map { jsonString ->
+                if (jsonString == null) {
+                    AlarmSettings()
+                } else {
+                    try {
+                        Json.decodeFromString<AlarmSettings>(jsonString)
+                    } catch (_: Exception) {
+                        AlarmSettings()
+                    }
+                }
+            }
+    }
+
     private object Keys {
         const val READING_UNITS_KEY = "reading_units"
         const val THEME_MODE_KEY = "theme_mode"
         const val HIGH_TARGET_KEY = "high_target"
         const val LOW_TARGET_KEY = "low_target"
+        const val NOTIFICATION_SETTINGS_KEY = "notification_settings"
     }
 }

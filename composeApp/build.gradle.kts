@@ -48,6 +48,10 @@ kotlin {
 
             implementation(libs.vico.compose)
             implementation(libs.vico.compose.m3)
+
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs)
+            implementation(libs.filekit.dialogs.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

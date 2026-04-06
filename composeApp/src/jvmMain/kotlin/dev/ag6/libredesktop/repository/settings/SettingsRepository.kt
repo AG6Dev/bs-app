@@ -1,5 +1,6 @@
 package dev.ag6.libredesktop.repository.settings
 
+import dev.ag6.libredesktop.model.alarms.AlarmSettings
 import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
@@ -16,4 +17,7 @@ interface SettingsRepository {
 
     suspend fun setLowTarget(valueMgDl: Int)
     fun getLowTarget(): Flow<Int>
+
+    suspend fun setAlarmSettings(alarmSettings: AlarmSettings)
+    fun getAlarmSettings(): Flow<AlarmSettings>
 }
