@@ -52,6 +52,8 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
+
+            implementation(libs.notifier)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

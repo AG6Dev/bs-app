@@ -23,6 +23,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.LineCartesianLayerModel
 import dev.ag6.libredesktop.model.reading.GlucoseReading
 import dev.ag6.libredesktop.model.reading.ReadingUnit
 import dev.ag6.libredesktop.model.reading.TrendArrow
+import dev.ag6.libredesktop.model.reading.TrendArrow.Companion.trendArrowFromValue
 import dev.ag6.libredesktop.ui.components.GlucoseGraphView
 import dev.ag6.libredesktop.ui.components.SectionCard
 import dev.ag6.libredesktop.ui.theme.statusHigh
@@ -216,6 +217,3 @@ private fun glucoseStatusColor(
     valueInMgPerDl > highTargetMgDl -> statusHigh
     else -> statusInRange
 }
-
-private fun trendArrowFromValue(value: Int): TrendArrow? =
-    TrendArrow.entries.firstOrNull { it.value == value }

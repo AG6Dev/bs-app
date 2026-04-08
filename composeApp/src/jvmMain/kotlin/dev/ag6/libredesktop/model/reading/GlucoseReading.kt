@@ -9,12 +9,15 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-enum class TrendArrow(val value: Int, val imageVector: DrawableResource) {
-    RapidlyFalling(1, Res.drawable.south_24px), Falling(2, Res.drawable.south_east_24px), Flat(
-        3,
-        Res.drawable.east_24px
+enum class TrendArrow(val value: Int, val imageVector: DrawableResource, val emoji: String) {
+    RapidlyFalling(1, Res.drawable.south_24px, "⬇️"), Falling(2, Res.drawable.south_east_24px, "↘️"), Flat(
+        3, Res.drawable.east_24px, "➡️"
     ),
-    Rising(4, Res.drawable.north_east_24px), RapidlyRising(5, Res.drawable.north_24px)
+    Rising(4, Res.drawable.north_east_24px, "↗️"), RapidlyRising(5, Res.drawable.north_24px, "⬆️");
+
+    companion object {
+        fun trendArrowFromValue(value: Int): TrendArrow? = TrendArrow.entries.firstOrNull { it.value == value }
+    }
 }
 
 

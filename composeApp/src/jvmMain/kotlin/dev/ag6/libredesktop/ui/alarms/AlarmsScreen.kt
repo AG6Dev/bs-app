@@ -132,8 +132,7 @@ fun AlarmsScreenContent(
                                         readOnly = true,
                                         trailingIcon = {
                                             IconButton(
-                                                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
-                                                onClick = {
+                                                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand), onClick = {
                                                     coroutineScope.launch {
                                                         val selectedFile = FileKit.openFilePicker(
                                                             FileKitType.File(

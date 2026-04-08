@@ -4,6 +4,7 @@ import com.github.javakeyring.Keyring
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.PreferencesSettings
 import dev.ag6.libredesktop.AppContext
+import dev.ag6.libredesktop.notifications.GlucoseAlertNotifier
 import dev.ag6.libredesktop.repository.auth.AuthRepository
 import dev.ag6.libredesktop.repository.auth.AuthRepositoryImpl
 import dev.ag6.libredesktop.repository.readings.ReadingsRepository
@@ -54,6 +55,7 @@ fun appModule() = module {
     single<ReadingsRepository> { ReadingsRepositoryImpl(get(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single { AppContext(get(), get()) } onClose { it?.close() }
+    single { GlucoseAlertNotifier(get(), get()) } onClose { it?.close() }
 
     single<Keyring> { Keyring.create() } onClose { it?.close() }
 }
